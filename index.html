@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MR TO DO LIST</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4285f4;
+            --primary-dark: #3367d6;
+            --accent: #ff6b6b;
+            --sidebar-bg: #2d3748;
+            --sidebar-text: #e2e8f0;
+            --main-bg: #f7fafc;
+            --task-bg: #ffffff;
+            --border: #e2e8f0;
+            --text: #2d3748;
+            --text-light: #718096;
+            --completed: #a0aec0;
+            --success: #48bb78;
+            --warning: #ed8936;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        @font-face {
+            font-family: 'Inter';
+            src: url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        }
+
+        body {
+            background-color: var(--main-bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 20px 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            z-index: 20;
+        }
+
+        .logo {
+            padding: 0 20px 20px;
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            margin-right: 12px;
+            color: var(--accent);
+            font-size: 24px;
+        }
+
+        .menu {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .menu-section {
+            margin-bottom: 25px;
+        }
+
+        .menu-title {
+            padding: 0 20px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 12px;
+        }
+
+        .menu-item {
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            margin: 2px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .menu-item.active {
+            background-color: rgba(255, 255, 255, 0.12);
+            border-left: 3px solid var(--accent);
+        }
+
+        .menu-item i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .badge {
+            margin-left: auto;
+            background-color: var(--accent);
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            z-index: 10;
+        }
+
+        .menu-toggle {
+            display: none;
+            margin-right: 16px;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .header-title i {
+            margin-right: 10px;
+            color: var(--primary);
+        }
+
+        .search-bar {
+            margin-left: auto;
+            position: relative;
+            width: 280px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 8px 15px 8px 36px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+            transition: all 0.2s;
+            background-color: #f8fafc;
+        }
+
+        .search-bar input:focus {
+            border-color: var(--primary);
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .user-menu {
+            margin-left: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Task Container */
+        .task-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background-color: var(--main-bg);
+        }
+
+        .task-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .view-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .task-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .action-btn i {
+            margin-right: 6px;
+            font-size: 14px;
+        }
+
+        .action-btn:hover {
+            background-color: #f8fafc;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Add Task */
+        .add-task {
+            display: flex;
+            margin-bottom: 20px;
+            background-color: var(--task-bg);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .add-task:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+        }
+
+        .add-task input {
+            flex: 1;
+            padding: 14px 16px;
+            border: none;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .add-task button {
+            padding: 0 18px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .add-task button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* Task List */
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            background-color: var(--task-bg);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+        }
+
+        .task-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .task-checkbox {
+            width: 18px;
+            height: 18px;
+            margin-right: 14px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .task-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .task-text {
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .task-text.completed {
+            text-decoration: line-through;
+            color: var(--completed);
+        }
+
+        .task-meta {
+            display: flex;
+            align-items: center;
+            margin-top: 4px;
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .task-due {
+            display: flex;
+            align-items: center;
+            margin-right: 12px;
+        }
+
+        .task-due i {
+            margin-right: 4px;
+            font-size: 12px;
+        }
+
+        .task-due.today {
+            color: var(--warning);
+        }
+
+        .task-due.overdue {
+            color: var(--accent);
+        }
+
+        .task-tag {
+            padding: 2px 6px;
+            background-color: #ebf8ff;
+            color: var(--primary);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .task-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            border-radius: 4px;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .task-btn:hover {
+            background-color: #f8fafc;
+            color: var(--primary);
+        }
+
+        .task-btn.important {
+            color: var(--warning);
+        }
+
+        .task-btn.important.active {
+            color: #ffcc00;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            color: var(--border);
+            margin-bottom: 16px;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .empty-text {
+            font-size: 14px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .sidebar {
+                position: absolute;
+                left: -280px;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .search-bar {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .search-bar {
+                display: none;
+            }
+
+            .header-title span {
+                display: none;
+            }
+
+            .task-actions .action-btn span {
+                display: none;
+            }
+
+            .task-actions .action-btn i {
+                margin-right: 0;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .task-container {
+                padding: 16px;
+            }
+
+            .add-task input {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+
+            .task-item {
+                padding: 12px;
+            }
+
+            .task-text {
+                font-size: 14px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-item {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-check-double logo-icon"></i>
+            <span>MR TO DO LIST</span>
+        </div>
+        
+        <div class="menu">
+            <div class="menu-section">
+                <div class="menu-title">Tasks</div>
+                <div class="menu-item active" data-view="inbox">
+                    <i class="fas fa-inbox"></i>
+                    <span>Inbox</span>
+                    <span class="badge">0</span>
+                </div>
+                <div class="menu-item" data-view="today">
+                    <i class="fas fa-calendar-day"></i>
+                    <span>Today</span>
+                </div>
+                <div class="menu-item" data-view="upcoming">
+                    <i class="fas fa-calendar-week"></i>
+                    <span>Upcoming</span>
+                </div>
+                <div class="menu-item" data-view="important">
+                    <i class="fas fa-star"></i>
+                    <span>Important</span>
+                </div>
+                <div class="menu-item" data-view="completed">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Completed</span>
+                </div>
+            </div>
+            
+            <div class="menu-section">
+                <div class="menu-title">Lists</div>
+                <div class="menu-item" data-view="personal">
+                    <i class="fas fa-user"></i>
+                    <span>Personal</span>
+                </div>
+                <div class="menu-item" data-view="work">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Work</span>
+                </div>
+                <div class="menu-item" data-view="shopping">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Shopping</span>
+                </div>
+                <div class="menu-item" id="add-list-btn">
+                    <i class="fas fa-plus"></i>
+                    <span>Add New List</span>
+                </div>
+            </div>
+            
+            <div class="menu-section">
+                <div class="menu-title">Settings</div>
+                <div class="menu-item" id="settings-btn">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+                <div class="menu-item" id="theme-btn">
+                    <i class="fas fa-moon"></i>
+                    <span>Theme</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <div class="menu-toggle" id="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="header-title">
+                <i class="fas fa-inbox"></i>
+                <span>Inbox</span>
+            </div>
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search tasks...">
+            </div>
+            <div class="user-menu">
+                <div class="user-avatar">M</div>
+            </div>
+        </div>
+        
+        <div class="task-container">
+            <div class="task-header">
+                <div class="view-title">Inbox Tasks</div>
+                <div class="task-actions">
+                    <button class="action-btn" id="sort-btn">
+                        <i class="fas fa-sort"></i>
+                        <span>Sort</span>
+                    </button>
+                    <button class="action-btn" id="filter-btn">
+                        <i class="fas fa-filter"></i>
+                        <span>Filter</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="add-task">
+                <input type="text" id="task-input" placeholder="Add a new task...">
+                <button id="add-task-btn">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+            <ul class="task-list" id="task-list">
+                <div class="empty-state">
+                    <i class="fas fa-tasks empty-icon"></i>
+                    <div class="empty-title">No tasks yet</div>
+                    <div class="empty-text">Add your first task by typing in the box above</div>
+                </div>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.getElementById('menu-toggle');
+            const taskInput = document.getElementById('task-input');
+            const addTaskBtn = document.getElementById('add-task-btn');
+            const taskList = document.getElementById('task-list');
+            const menuItems = document.querySelectorAll('.menu-item[data-view]');
+            const headerTitle = document.querySelector('.header-title');
+            const viewTitle = document.querySelector('.view-title');
+            const badge = document.querySelector('.badge');
+            const searchInput = document.getElementById('search-input');
+            const sortBtn = document.getElementById('sort-btn');
+            const filterBtn = document.getElementById('filter-btn');
+            
+            // Current view and tasks
+            let currentView = 'inbox';
+            let tasks = JSON.parse(localStorage.getItem('mr-todo-tasks')) || [];
+            
+            // Initialize the app
+            function init() {
+                renderTasks();
+                updateTaskCount();
+                setupEventListeners();
+            }
+            
+            // Set up event listeners
+            function setupEventListeners() {
+                // Menu toggle
+                menuToggle.addEventListener('click', toggleSidebar);
+                
+                // Add new task
+                addTaskBtn.addEventListener('click', addTask);
+                taskInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') addTask();
+                });
+                
+                // Menu navigation
+                menuItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        setActiveView(this.dataset.view);
+                    });
+                });
+                
+                // Search functionality
+                searchInput.addEventListener('input', function() {
+                    renderTasks();
+                });
+                
+                // Close sidebar when clicking outside on mobile
+                document.addEventListener('click', function(e) {
+                    if (window.innerWidth <= 992 && 
+                        !sidebar.contains(e.target) && 
+                        e.target !== menuToggle) {
+                        sidebar.classList.remove('active');
+                    }
+                });
+                
+                // Sort and filter buttons
+                sortBtn.addEventListener('click', showSortOptions);
+                filterBtn.addEventListener('click', showFilterOptions);
+            }
+            
+            // Toggle sidebar visibility on mobile
+            function toggleSidebar() {
+                sidebar.classList.toggle('active');
+            }
+            
+            // Set the active view
+            function setActiveView(view) {
+                currentView = view;
+                
+                // Update active menu item
+                menuItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.view === view) {
+                        item.classList.add('active');
+                    }
+                });
+                
+                // Update header titles
+                const activeItem = document.querySelector(`.menu-item[data-view="${view}"]`);
+                const iconClass = activeItem.querySelector('i').className;
+                headerTitle.innerHTML = `<i class="${iconClass}"></i><span>${activeItem.querySelector('span').textContent}</span>`;
+                viewTitle.textContent = `${activeItem.querySelector('span').textContent} Tasks`;
+                
+                // Re-render tasks
+                renderTasks();
+            }
+            
+            // Render tasks based on current view and search
+            function renderTasks() {
+                taskList.innerHTML = '';
+                
+                const filteredTasks = filterTasks();
+                
+                if (filteredTasks.length === 0) {
+                    showEmptyState();
+                } else {
+                    filteredTasks.forEach(task => {
+                        const taskItem = createTaskElement(task);
+                        taskList.appendChild(taskItem);
+                    });
+                }
+            }
+            
+            // Filter tasks based on current view and search
+            function filterTasks() {
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                return tasks.filter(task => {
+                    // Filter by search term
+                    if (searchTerm && !task.text.toLowerCase().includes(searchTerm)) {
+                        return false;
+                    }
+                    
+                    // Filter by current view
+                    switch (currentView) {
+                        case 'inbox':
+                            return !task.completed && (!task.list || task.list === 'inbox');
+                        case 'today':
+                            return task.due === 'Today' && !task.completed;
+                        case 'upcoming':
+                            return task.due && task.due !== 'Today' && !task.completed;
+                        case 'important':
+                            return task.important && !task.completed;
+                        case 'completed':
+                            return task.completed;
+                        case 'personal':
+                        case 'work':
+                        case 'shopping':
+                            return task.list === currentView && !task.completed;
+                        default:
+                            return true;
+                    }
+                });
+            }
+            
+            // Show empty state
+            function showEmptyState() {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                
+                const activeItem = document.querySelector(`.menu-item[data-view="${currentView}"]`);
+                const iconClass = activeItem.querySelector('i').className;
+                
+                emptyState.innerHTML = `
+                    <i class="${iconClass} empty-icon"></i>
+                    <div class="empty-title">No ${activeItem.querySelector('span').textContent.toLowerCase()} tasks</div>
+                    <div class="empty-text">${currentView === 'completed' ? 'Complete some tasks to see them here' : 'Add a new task to get started'}</div>
+                `;
+                
+                taskList.appendChild(emptyState);
+            }
+            
+            // Create task element
+            function createTaskElement(task) {
+                const taskItem = document.createElement('li');
+                taskItem.className = 'task-item';
+                taskItem.dataset.id = task.id;
+                
+                // Checkbox
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'task-checkbox';
+                checkbox.checked = task.completed;
+                checkbox.addEventListener('change', () => toggleTaskCompletion(task.id));
+                
+                // Task content
+                const taskContent = document.createElement('div');
+                taskContent.className = 'task-content';
+                
+                // Task text
+                const taskText = document.createElement('div');
+                taskText.className = 'task-text';
+                taskText.textContent = task.text;
+                if (task.completed) taskText.classList.add('completed');
+                
+                // Task meta (due date, tags)
+                const taskMeta = document.createElement('div');
+                taskMeta.className = 'task-meta';
+                
+                if (task.due) {
+                    const dueDate = document.createElement('div');
+                    dueDate.className = 'task-due';
+                    if (task.due === 'Today') dueDate.classList.add('today');
+                    if (task.due === 'Overdue') dueDate.classList.add('overdue');
+                    
+                    const dueIcon = document.createElement('i');
+                    dueIcon.className = 'far fa-calendar-alt';
+                    dueDate.appendChild(dueIcon);
+                    
+                    const dueText = document.createTextNode(task.due);
+                    dueDate.appendChild(dueText);
+                    
+                    taskMeta.appendChild(dueDate);
+                }
+                
+                if (task.list && task.list !== 'inbox') {
+                    const taskTag = document.createElement('div');
+                    taskTag.className = 'task-tag';
+                    taskTag.textContent = task.list.charAt(0).toUpperCase() + task.list.slice(1);
+                    taskMeta.appendChild(taskTag);
+                }
+                
+                taskContent.appendChild(taskText);
+                taskContent.appendChild(taskMeta);
+                
+                // Task actions
+                const taskActions = document.createElement('div');
+                taskActions.className = 'task-actions';
+                
+                // Important button
+                const importantBtn = document.createElement('button');
+                importantBtn.className = 'task-btn important' + (task.important ? ' active' : '');
+                importantBtn.innerHTML = '<i class="fas fa-star"></i>';
+                importantBtn.addEventListener('click', () => toggleTaskImportance(task.id));
+                
+                // Delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'task-btn';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.addEventListener('click', () => deleteTask(task.id));
+                
+                taskActions.appendChild(importantBtn);
+                taskActions.appendChild(deleteBtn);
+                
+                // Assemble task item
+                taskItem.appendChild(checkbox);
+                taskItem.appendChild(taskContent);
+                taskItem.appendChild(taskActions);
+                
+                return taskItem;
+            }
+            
+            // Add new task
+            function addTask() {
+                const text = taskInput.value.trim();
+                if (!text) return;
+                
+                const newTask = {
+                    id: Date.now(),
+                    text,
+                    completed: false,
+                    due: '',
+                    important: false,
+                    list: currentView === 'inbox' ? null : currentView
+                };
+                
+                tasks.unshift(newTask);
+                taskInput.value = '';
+                
+                saveTasks();
+                renderTasks();
+                updateTaskCount();
+            }
+            
+            // Toggle task completion
+            function toggleTaskCompletion(id) {
+                tasks = tasks.map(task => {
+                    if (task.id === id) {
+                        return { ...task, completed: !task.completed };
+                    }
+                    return task;
+                });
+                
+                saveTasks();
+                renderTasks();
+                updateTaskCount();
+            }
+            
+            // Toggle task importance
+            function toggleTaskImportance(id) {
+                tasks = tasks.map(task => {
+                    if (task.id === id) {
+                        return { ...task, important: !task.important };
+                    }
+                    return task;
+                });
+                
+                saveTasks();
+                renderTasks();
+            }
+            
+            // Delete task
+            function deleteTask(id) {
+                tasks = tasks.filter(task => task.id !== id);
+                
+                saveTasks();
+                renderTasks();
+                updateTaskCount();
+            }
+            
+            // Show sort options
+            function showSortOptions() {
+                alert('Sort options would appear here in a full implementation');
+            }
+            
+            // Show filter options
+            function showFilterOptions() {
+                alert('Filter options would appear here in a full implementation');
+            }
+            
+            // Update task count badge
+            function updateTaskCount() {
+                const inboxTasks = tasks.filter(task => 
+                    !task.completed && 
+                    (!task.list || task.list === 'inbox')
+                ).length;
+                
+                badge.textContent = inboxTasks;
+            }
+            
+            // Save tasks to localStorage
+            function saveTasks() {
+                localStorage.setItem('mr-todo-tasks', JSON.stringify(tasks));
+            }
+            
+            // Initialize the app
+            init();
+        });
+    </script>
+</body>
+</html>
